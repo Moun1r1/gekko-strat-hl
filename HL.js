@@ -31,7 +31,15 @@ var percent = 35;
 var distance = 3;
 var Period = 14;
 var lastcolor = 0;
+var Min = [];
+IsReversalUp = function(min,candle){
 
+    var c1 = this.candle_queue[this.candle_queue.length -2];
+    return (candle.low < min && candle.close > c1.close);
+
+}
+
+var MoveCycle = [];
 method.check = function(candle) {
     if (this.candle_queue.length >= 15)
     {
@@ -45,26 +53,35 @@ method.check = function(candle) {
                 var runningMin  = bar.close;
             }
         }
+        Min.push(runningMin);
 
-        // for (var barsBack = Math.min(this.candle_queue.length, Period - 1); barsBack > 0; barsBack--)
-        // {
-        //     var bar = this.candle_queue[barsBack];
-        //     if(bar.close >= runninMax)
-        //     {
-        //         var runninMax  = bar.close;
-        //         log.debug(runninMax);
+        for (var barsBack = Math.min(this.candle_queue.length, Period - 1); barsBack > 0; barsBack--)
+        {
+            var bar = this.candle_queue[barsBack];
+            if(bar.close >= runninMax)
+            {
+                var runninMax  = bar.close;
+                log.debug(runninMax);
 
-        //     }
-        // }
-        if(this.candle.close < runningMin && (this.candle.close - runningMin) / 100 < -4)
+            }
+        }
+
+        log.debug(runninMax);
+        var LowerLow = Min[Min.length -2] > Min[Min.length -1];
+        log.debug("Lower Low :", LowerLow);
+        var CandeLow = this.candle.close < runningMin && (this.candle.close - runningMin) / 100;
+        MoveCycle.push((this.candle.close - runningMin) / 100);
+        var Downslow = MoveCycle[MoveCycle.length -2] > MoveCycle[MoveCycle.length -1];
+        if(CandeLow && Downslow)
         {
             log.debug("Lower move : ",(this.candle.close - runningMin) / 100)
             this.price_buyin = candle.close;
             this.is_buyin = true;
             return this.advice("long");
         }
-        else if (candle.close <candle.low + ((candle.high - candle.low) * (percent / 100)))
+        else if (candle.close >= runninMax &! Downslow)
         {
+            
                 this.is_buyin = false;
                 return this.advice("short");
         }
