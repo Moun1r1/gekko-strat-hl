@@ -34,11 +34,10 @@ method.update = function(candle) {
 }
 var percent = 35;
 var distance = 3;
-var Period = 25;
+var Period = 14;
 var lastcolor = 0;
 var Min = [];
 var MovingTR = [];
-var NoTradedSince = 0; 
 IsReversalUp = function(min,candle){
 
     var c1 = this.candle_queue[this.candle_queue.length -2];
@@ -48,7 +47,7 @@ IsReversalUp = function(min,candle){
 
 var MoveCycle = [];
 method.check = function(candle) {
-    if (this.candle_queue.length >= Period)
+    if (this.candle_queue.length >= 15)
     {
         runningMin = 99999999;
         runninMax = 0;
@@ -84,9 +83,9 @@ method.check = function(candle) {
         var Range = 100 * ((valid - runningMin) / (runninMax - runningMin));
         MovingTR.push(valid);
         var MovingSlower = MovingTR[MovingTR.length -2] > valid;
-        var RangeControl = valid != Infinity;
 
-        if(CandeLow  &&! MovingSlower && valid > 0 &&! this.is_buyin && this.candle.close > this.psar && RangeControl)
+
+        if(CandeLow  &&! MovingSlower && valid > 0 &&! this.is_buyin && this.candle.close > this.psar)
         {
             this.price_buyin = candle.close;
             log.debug("valid : ",valid);
@@ -94,35 +93,15 @@ method.check = function(candle) {
             runningMin = 0;
             runninMax = 0;
             Downslow.length = 0;
-            MovingTR.length = 0;
-            MovingSlower.length = 0;
+
             this.is_buyin = true;
             return this.advice("long");
         }
         else if (candle.close >= runninMax && this.is_buyin  )
         {
-            this.candle_queue.length = 0;
-            runningMin = 0;
-            runninMax = 0;
-            MovingTR.length = 0;
-            Downslow.length = 0;
-            MovingSlower.length = 0;
-            this.is_buyin = false;
-            return this.advice("short");
+                this.is_buyin = false;
+                return this.advice("short");
         }
-        if(NoTradedSince > 50 &&! this.is_buyin)
-        {
-            log.debug("Reseting vars");
-            log.debug("No trade since : ",NoTradedSince);
-            this.candle_queue.length = 0;
-            runningMin = 0;
-            runninMax = 0;
-            Downslow.length = 0;
-            MovingTR.length = 0;
-            MovingSlower.length = 0;
-            NoTradedSince = 0;
-        }
-        NoTradedSince++;
     
     }
 }
